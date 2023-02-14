@@ -1,44 +1,59 @@
-# https://stackoverflow.com/questions/72442371/deploying-streamlit-app-in-azure-without-using-docker
-# let op! werkt niet met Python 3.9.7
-
-import streamlit as st
+from flask import Flask, flash, request, redirect, url_for
 from io import StringIO, BytesIO
 import matplotlib.pyplot as plt
-
-st.title('Visualiseer geotechnisch grondonderzoek')
+import base64
 
 from gefxml_reader import Cpt
-uploaded_file = st.file_uploader("Choose a file")
 
-if uploaded_file is not None:
-    # To read file as bytes:
-    bytes_data = uploaded_file.getvalue()
+UPLOAD_FOLDER = '/path/to/the/uploads'
+ALLOWED_EXTENSIONS = {'gef', 'xml'}
 
-    # To convert to a string based IO:
-    stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    # To read file as string:
-    string_data = stringio.read()
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    cpt = Cpt()
-    if uploaded_file.name.lower().endswith('xml'):
-        cpt.load_xml(string_data, checkAddDepth=True, checkAddFrictionRatio=True, file=False)
-    elif uploaded_file.name.lower().endswith('gef'):
-        cpt.load_gef(string_data, checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            cpt = Cpt()
+            if file.filename.lower().endswith('xml'):
+                cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, file=False)
+            elif file.filename.lower().endswith('gef'):
+                cpt.load_gef(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+            
+            fig = cpt.plot(returnFig=True)
+            fn = file.filename.replace('.xml', '.png')
+            img = BytesIO()
+            plt.savefig(img, format='png')
+            img.seek(0)
+            plot_url = base64.b64encode(img.getvalue()).decode()
+            
+            return '<img src="data:image/png;base64,{}">'.format(plot_url)
 
-    fig = cpt.plot(returnFig=True)
-
-    fn = uploaded_file.name.replace('.xml', '.png')
-    img = BytesIO()
-    plt.savefig(img, format='png')
-    
-    btn = st.download_button(
-    label="Download image",
-    data=img,
-    file_name=fn,
-    mime="image/png"
-    )
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <input type=file name=file>
+      <input type=submit value=Upload>
+    </form>
+    '''
 
 
-
-    st.pyplot(fig)
+if __name__ == '__main__':
+   app.run()

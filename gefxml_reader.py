@@ -696,7 +696,7 @@ class Cpt(Test):
         ax.tick_params(which='minor', color='black')
         ax.grid(which='major', linestyle='-', linewidth='0.15', color='black')
         ax.grid(which='minor', linestyle='-', linewidth='0.1')
-        ax.grid(b=True, which='both')
+#        ax.grid(b=True, which='both') # TODO: uitgezet. Geen idee meer wat dit doet
 
 
         if returnFig: # TODO: dit is nieuw

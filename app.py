@@ -1,6 +1,7 @@
-from flask import Flask, flash, request, redirect, url_for
+from flask import Flask, flash, request, redirect, url_for, send_file
 from io import StringIO, BytesIO
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import base64
 
 from gefxml_reader import Cpt
@@ -32,17 +33,43 @@ def upload_file():
             cpt = Cpt()
             if file.filename.lower().endswith('xml'):
                 cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, file=False)
+                try:
+                    pdfName = file.filename.replace('.xml', '.pdf')
+                    pngName = file.filename.replace('.xml', '.png')
+                except:
+                    pdfName = file.filename.replace('.XML', '.pdf')
+                    pngName = file.filename.replace('.XML', '.png')
+                    
             elif file.filename.lower().endswith('gef'):
                 cpt.load_gef(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
-            
+                try:
+                    pdfName = file.filename.replace('.gef', '.pdf')
+                    pngName = file.filename.replace('.gef', '.png')
+                except:
+                    pdfName = file.filename.replace('.GEF', '.pdf')
+                    pngName = file.filename.replace('.GEF', '.png')
+
             fig = cpt.plot(returnFig=True)
-            fn = file.filename.replace('.xml', '.png')
+
+            pdfBytes = BytesIO()
+            plt.savefig(pdfBytes, format='pdf')
+            pdfBytes.seek(0)
+            pdf_url = base64.b64encode(pdfBytes.getvalue()).decode()
+
             img = BytesIO()
             plt.savefig(img, format='png')
             img.seek(0)
-            plot_url = base64.b64encode(img.getvalue()).decode()
+            png_url = base64.b64encode(img.getvalue()).decode()
             
-            return '<img src="data:image/png;base64,{}">'.format(plot_url)
+
+
+# TODO: probeer dit voor download van pdf: https://stackoverflow.com/questions/36966516/python-flask-valueerror-i-o-operation-on-closed-file
+
+            return f'''
+            <a href=data:object/pdf;base64,{pdf_url} download="{pdfName}"><button>Download pdf</button></a>
+            <a href=data:image/png;base64,{png_url} download="{pngName}"><button>Download png</button></a>
+            <img src="data:image/png;base64,{png_url}">
+            '''
 
     return '''
     <!doctype html>

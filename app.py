@@ -33,21 +33,13 @@ def upload_file():
             cpt = Cpt()
             if file.filename.lower().endswith('xml'):
                 cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, file=False)
-                try:
-                    pdfName = file.filename.replace('.xml', '.pdf')
-                    pngName = file.filename.replace('.xml', '.png')
-                except:
-                    pdfName = file.filename.replace('.XML', '.pdf')
-                    pngName = file.filename.replace('.XML', '.png')
+                pdfName = file.filename.lower().replace('.xml', '.pdf')
+                pngName = file.filename.lower().replace('.xml', '.png')
                     
             elif file.filename.lower().endswith('gef'):
                 cpt.load_gef(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
-                try:
-                    pdfName = file.filename.replace('.gef', '.pdf')
-                    pngName = file.filename.replace('.gef', '.png')
-                except:
-                    pdfName = file.filename.replace('.GEF', '.pdf')
-                    pngName = file.filename.replace('.GEF', '.png')
+                pdfName = file.filename.lower().replace('.gef', '.pdf') 
+                pngName = file.filename.lower().replace('.gef', '.png')
 
             fig = cpt.plot(returnFig=True)
 

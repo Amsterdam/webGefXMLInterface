@@ -696,11 +696,7 @@ class Cpt(Test):
         ax.tick_params(which='minor', color='black')
         ax.grid(which='major', linestyle='-', linewidth='0.15', color='black')
         ax.grid(which='minor', linestyle='-', linewidth='0.1')
-<<<<<<< HEAD
 #        ax.grid(b=True, which='both') # TODO: uitgezet. Geen idee meer wat dit doet
-=======
-#        ax.grid(b=True, which='both')
->>>>>>> 847f89f3fa8febb1fe4d93c6112e365bc99b85ca
 
 
         if returnFig: # TODO: dit is nieuw

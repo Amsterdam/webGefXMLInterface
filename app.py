@@ -1,16 +1,13 @@
-from flask import Flask, flash, request, redirect, url_for, send_file
-from io import StringIO, BytesIO
+from flask import Flask, flash, request, redirect
+from io import BytesIO
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import base64
 
 from gefxml_reader import Cpt
 
-UPLOAD_FOLDER = '/path/to/the/uploads'
 ALLOWED_EXTENSIONS = {'gef', 'xml'}
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -35,11 +32,13 @@ def upload_file():
                 cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, file=False)
                 pdfName = file.filename.lower().replace('.xml', '.pdf')
                 pngName = file.filename.lower().replace('.xml', '.png')
-                    
+                dataName = file.filename.lower().replace('.xml', '.csv')
+
             elif file.filename.lower().endswith('gef'):
                 cpt.load_gef(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
                 pdfName = file.filename.lower().replace('.gef', '.pdf') 
                 pngName = file.filename.lower().replace('.gef', '.png')
+                dataName = file.filename.lower().replace('.gef', '.csv')
 
             fig = cpt.plot(returnFig=True)
 
@@ -53,20 +52,22 @@ def upload_file():
             img.seek(0)
             png_url = base64.b64encode(img.getvalue()).decode()
             
-
-
-# TODO: probeer dit voor download van pdf: https://stackoverflow.com/questions/36966516/python-flask-valueerror-i-o-operation-on-closed-file
+            dataOut = BytesIO()
+            cpt.data.to_csv(dataOut, sep=';')
+            data_url = base64.b64encode(dataOut.getvalue()).decode()
 
             return f'''
             <a href=data:object/pdf;base64,{pdf_url} download="{pdfName}"><button>Download pdf</button></a>
             <a href=data:image/png;base64,{png_url} download="{pngName}"><button>Download png</button></a>
+            <a href=data:object/csv;base64,{data_url} download="{dataName}"><button>Download data</button></a>
             <img src="data:image/png;base64,{png_url}">
             '''
 
     return '''
     <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
+    <title>Plot sonderingen</title>
+    <h1>Upload een gef of xml van een sondering</h1>
+    <p>Daarna kan je deze als pdf en png downloaden<p>
     <form method=post enctype=multipart/form-data>
       <input type=file name=file>
       <input type=submit value=Upload>

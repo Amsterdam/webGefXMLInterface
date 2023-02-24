@@ -46,9 +46,7 @@ class Test():
                     return 'cpt'
                 elif 'BORE' in match.group('type').upper():
                     return 'bore'
-            except Exception as e:
-                print(e)
-                print(f'geen type gevonden voor {f}')
+            except:
                 pass
 
     def type_from_xml(self, xmlFile):
@@ -532,7 +530,6 @@ class Cpt(Test):
         # TODO: maar soms zijn de kolommen niet precies even breed, dan gaat het mis C:/Users/User/PBK/CPT/GEF/002488\002488_S01.GEF
 #        self.data = pd.read_fwf(StringIO(self.data), header=None)         
         self.data = pd.read_csv(StringIO(self.data), sep=self.columnseparator, skipinitialspace=True, lineterminator='\n', header=None) 
-        
         # vervang de dummy waarden door nan
         for columnnr, voidvalue in self.columnvoid_values.items():
             self.data[columnnr] = self.data[columnnr].replace(voidvalue, np.nan)
@@ -1012,8 +1009,8 @@ class Bore(Test):
 
         columnvoid_pattern = re.compile(r'#COLUMNVOID\s*=\s*(?P<columnnr>\d*),\s*(?P<voidvalue>.*)\s*')
         columninfo_pattern = re.compile(r'#COLUMNINFO\s*=\s*(?P<columnnr>\d*),\s*(?P<unit>.*),\s*(?P<parameter>.*),\s*(?P<quantitynr>\d*)\s*')
-        columnseparator_pattern = re.compile(r'#COLUMNSEPARATOR\s*=\s*(?P<columnseparator>.*)')
-        recordseparator_pattern = re.compile(r'#RECORDSEPARATOR\s*=\s*(?P<recordseparator>.*)')
+        columnseparator_pattern = re.compile(r'#COLUMNSEPARATOR\s*=\s*(?P<columnseparator>.*)\s*')
+        recordseparator_pattern = re.compile(r'#RECORDSEPARATOR\s*=\s*(?P<recordseparator>.*)\s*')
 
         self.metadata_from_gef(gefFile)
 

@@ -3,7 +3,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import base64
 
-from gefxml_reader import Cpt
+from geotexxx import gefxml_reader
 
 ALLOWED_EXTENSIONS = {'gef', 'xml'}
 
@@ -27,9 +27,9 @@ def upload_file():
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            cpt = Cpt()
+            cpt = gefxml_reader.Cpt()
             if file.filename.lower().endswith('xml'):
-                cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, file=False)
+                cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
                 pdfName = file.filename.lower().replace('.xml', '.pdf')
                 pngName = file.filename.lower().replace('.xml', '.png')
                 dataName = file.filename.lower().replace('.xml', '.csv')
@@ -40,7 +40,7 @@ def upload_file():
                 pngName = file.filename.lower().replace('.gef', '.png')
                 dataName = file.filename.lower().replace('.gef', '.csv')
 
-            fig = cpt.plot(returnFig=True)
+            fig = cpt.plot(saveFig=False)
 
             pdfBytes = BytesIO()
             plt.savefig(pdfBytes, format='pdf')

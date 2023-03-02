@@ -27,20 +27,32 @@ def upload_file():
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            cpt = gefxml_reader.Cpt()
+            f = file.read().decode()
             if file.filename.lower().endswith('xml'):
-                cpt.load_xml(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+                testType = gefxml_reader.Test().type_from_xml(f, fromFile=False)
+                if testType == 'cpt':
+                    test = gefxml_reader.Cpt()
+                    test.load_xml(f, checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+                elif testType == 'bore':
+                    test = gefxml_reader.Bore()
+                    test.load_xml(f, fromFile=False)
                 pdfName = file.filename.lower().replace('.xml', '.pdf')
                 pngName = file.filename.lower().replace('.xml', '.png')
                 dataName = file.filename.lower().replace('.xml', '.csv')
 
             elif file.filename.lower().endswith('gef'):
-                cpt.load_gef(file.read().decode(), checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+                testType = gefxml_reader.Test().type_from_gef(f, fromFile=False)
+                if testType == 'cpt':
+                    test = gefxml_reader.Cpt()
+                    test.load_gef(f, checkAddDepth=True, checkAddFrictionRatio=True, fromFile=False)
+                elif testType == 'bore':
+                    test = gefxml_reader.Bore()
+                    test.load_gef(f, fromFile=False)
                 pdfName = file.filename.lower().replace('.gef', '.pdf') 
                 pngName = file.filename.lower().replace('.gef', '.png')
                 dataName = file.filename.lower().replace('.gef', '.csv')
 
-            fig = cpt.plot(saveFig=False)
+            fig = test.plot(saveFig=False)
 
             pdfBytes = BytesIO()
             plt.savefig(pdfBytes, format='pdf')
@@ -53,7 +65,12 @@ def upload_file():
             png_url = base64.b64encode(img.getvalue()).decode()
             
             dataOut = BytesIO()
-            cpt.data.to_csv(dataOut, sep=';')
+
+            if testType == 'cpt':
+                test.data.to_csv(dataOut, sep=';')
+            elif testType == 'bore':
+                test.soillayers['veld'].to_csv(dataOut, sep=';')
+            
             data_url = base64.b64encode(dataOut.getvalue()).decode()
 
             return f'''
